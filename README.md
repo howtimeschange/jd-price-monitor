@@ -2,7 +2,7 @@
 
 > 监控京东自营店铺所有 SKU 的前台价格，自动发现破价商品，通过钉钉推送告警。
 
-> **🖥️ macOS 桌面客户端已上线** — 图形界面管理所有功能，告别命令行。[跳转查看 →](#-macos-桌面客户端)
+> **🖥️ macOS + Windows 桌面客户端已上线** — 图形界面管理所有功能，告别命令行。[跳转查看 →](#️-macos--windows-桌面客户端)
 
 ## 一键安装
 
@@ -230,9 +230,21 @@ jd-price-monitor/
 
 ---
 
-## 🖥️ macOS 桌面客户端
+## 🖥️ macOS + Windows 桌面客户端
 
 基于 Electron 构建的原生桌面 App，深色主题，侧边栏导航，实时日志流，无需配置终端环境。
+
+### ⬇️ 直接下载
+
+前往 **[Releases 页面](https://github.com/howtimeschange/jd-price-monitor/releases/latest)** 下载最新版本：
+
+| 平台 | 文件 | 说明 |
+|------|------|------|
+| macOS（Apple Silicon）| `JD.Price.Monitor-*-arm64.dmg` | M1/M2/M3/M4 芯片 |
+| macOS（Intel）| `JD.Price.Monitor-*-x64.dmg` | Intel 芯片 |
+| Windows 10/11 | `JD-Price-Monitor-Setup-*.exe` | x64 安装程序（NSIS） |
+
+> **macOS 首次打开提示「无法验证开发者」**：在访达中右键 → 打开，或前往「系统设置 → 隐私与安全性」点击「仍要打开」。
 
 ### 开发模式运行
 
@@ -242,15 +254,14 @@ npm install
 npm start
 ```
 
-### 打包为 .dmg
+### 本地打包
 
 ```bash
 cd electron-app
 npm run bundle-python   # 下载内嵌 Python（首次需要）
-npm run build:mac       # 生成 dist/JD Price Monitor*.dmg
+npm run build:mac       # macOS DMG（arm64 + x64）
+npm run build:win       # Windows NSIS installer
 ```
-
-> 支持 arm64（Apple Silicon）和 x64（Intel Mac）双架构。
 
 ### 功能模块
 
