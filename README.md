@@ -2,6 +2,8 @@
 
 > 监控京东自营店铺所有 SKU 的前台价格，自动发现破价商品，通过钉钉推送告警。
 
+> **🖥️ macOS 桌面客户端已上线** — 图形界面管理所有功能，告别命令行。[跳转查看 →](#-macos-桌面客户端)
+
 ## 一键安装
 
 > **前置条件：** Python 3.9+、Node.js 18+、Git、Chrome 浏览器
@@ -208,14 +210,77 @@ jd-price-monitor/
 │   └── jd/
 │       ├── shop-prices.js        # bb-browser 列表页 adapter
 │       └── item-price.js         # bb-browser 详情页 adapter（兜底）
-└── src/
-    ├── config.py                 # 配置加载 & 保存
-    ├── checker.py                # 破价检测逻辑
-    ├── dingtalk.py               # 钉钉告警
-    ├── excel_writer.py           # Excel 导出（含兜底标记高亮）
-    ├── sku_fetcher.py            # SKU + 价格抓取（含兜底补全）
-    └── storage.py                # 历史记录存储
+├── src/
+│   ├── config.py                 # 配置加载 & 保存
+│   ├── checker.py                # 破价检测逻辑
+│   ├── dingtalk.py               # 钉钉告警
+│   ├── excel_writer.py           # Excel 导出（含兜底标记高亮）
+│   ├── sku_fetcher.py            # SKU + 价格抓取（含兜底补全）
+│   └── storage.py                # 历史记录存储
+└── electron-app/                 # 🖥️ macOS 桌面客户端
+    ├── src/
+    │   ├── main.js               # Electron 主进程（IPC / Chrome / daemon）
+    │   ├── preload.js            # 安全 IPC 桥接
+    │   └── renderer/             # 浮窗 UI（HTML + CSS + JS）
+    ├── backend/server.py         # FastAPI 后端（备用）
+    ├── assets/icon.icns          # App 图标
+    ├── electron-builder.yml      # 打包配置
+    └── scripts/                  # Python 内嵌下载 / 构建脚本
 ```
+
+---
+
+## 🖥️ macOS 桌面客户端
+
+基于 Electron 构建的原生桌面 App，深色主题，侧边栏导航，实时日志流，无需配置终端环境。
+
+### 开发模式运行
+
+```bash
+cd electron-app
+npm install
+npm start
+```
+
+### 打包为 .dmg
+
+```bash
+cd electron-app
+npm run bundle-python   # 下载内嵌 Python（首次需要）
+npm run build:mac       # 生成 dist/JD Price Monitor*.dmg
+```
+
+> 支持 arm64（Apple Silicon）和 x64（Intel Mac）双架构。
+
+### 功能模块
+
+**巡检运行** — 一键立即巡检 / 循环巡检，自定义间隔分钟数，实时日志流，进度状态显示。
+
+**店铺设置** — 图形化配置店铺 ID / 名称 / Vendor ID / CDP 端口。
+
+**巡检配置** — 破价阈值 / 循环间隔 / 历史保留天数，以及：
+- 🕐 登录等待：首次启动预留 N 秒供用户登录京东（默认 30 秒）
+- 🗂️ Excel 导出到桌面：开关控制，开启后结果直接出现在桌面
+- 🔁 循环每轮导出 Excel：每次循环巡检完自动生成一份 Excel
+
+**钉钉通知** — Webhook / Secret 图形化配置，一键开关。
+
+**Chrome 连接** — 实时显示 Chrome CDP 和 bb-browser daemon 状态，一键启动 Chrome（自动注入 `--remote-debugging-port=9222`）。
+
+**定时任务** — 基于系统 crontab 的可视化管理：
+- 查看所有已有定时任务，支持单条删除
+- 快速预设：每天 9:00 / 9&18点 / 工作日 9:00 / 每 2 小时
+- 自定义 cron 表达式 + 备注，生成命令自动含 `--no-login-wait`
+
+**数据文件** — 浏览最近生成的 Excel / JSON，直接打开或在 Finder 中定位。
+
+### 技术架构
+
+- Electron 主进程内嵌 bb-browser，启动时自动托管 daemon
+- Python 子进程调用现有爬取逻辑，所有新功能（兜底补价、Excel 颜色高亮、价格来源列）一并生效
+- 配置读写直接操作项目根目录的 `config.yaml`，与 CLI 版完全共用
+
+---
 
 ## 命令行直接运行（无 CLI）
 
