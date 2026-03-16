@@ -49,6 +49,10 @@
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 2h6l4 4v8H3V2z" stroke="currentColor" stroke-width="1.5"/><path d="M9 2v4h4" stroke="currentColor" stroke-width="1.5"/></svg>
           数据文件
         </button>
+        <button class="nav-item" data-panel="panel-cron">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3.5l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          定时任务
+        </button>
       </nav>
     </aside>
 
@@ -138,6 +142,25 @@
             <input type="number" id="cfg-keep-days" placeholder="7" min="1" />
             <span class="form-hint">超过天数的历史文件自动清理</span>
           </div>
+          <div class="form-divider"></div>
+          <div class="form-row">
+            <label>登录等待 (秒)</label>
+            <input type="number" id="cfg-login-wait" placeholder="30" min="0" />
+            <span class="form-hint">首次启动预留的登录京东时间，0 表示跳过</span>
+          </div>
+          <div class="form-row">
+            <label class="toggle-label">
+              <input type="checkbox" id="cfg-excel-to-desktop" />
+              Excel 导出到桌面
+            </label>
+            <span class="form-hint">关闭则保存到 data/ 目录</span>
+          </div>
+          <div class="form-row">
+            <label class="toggle-label">
+              <input type="checkbox" id="cfg-loop-export-excel" />
+              循环巡检每轮导出 Excel
+            </label>
+          </div>
           <button class="btn btn-primary" id="btn-save-check">保存配置</button>
         </div>
       </section>
@@ -211,6 +234,40 @@
         </div>
         <div class="file-list" id="file-list">
           <div class="empty-state">暂无数据文件</div>
+        </div>
+      </section>
+
+      <!-- Panel: 定时任务 -->
+      <section class="panel" id="panel-cron">
+        <div class="panel-header">
+          <h2>定时任务</h2>
+          <button class="btn btn-secondary" id="btn-refresh-cron">刷新</button>
+        </div>
+        <div class="form-section">
+          <p class="section-desc">基于系统 crontab 管理定时巡检任务。</p>
+
+          <div class="cron-list" id="cron-list">
+            <div class="empty-state">暂无定时任务</div>
+          </div>
+
+          <div class="form-divider"></div>
+          <h3 class="subsection-title">新增定时任务</h3>
+          <div class="form-row">
+            <label>Cron 表达式</label>
+            <input type="text" id="cron-expr" placeholder="例: 0 9 * * 1-5" style="font-family:monospace" />
+          </div>
+          <div class="form-row">
+            <label>备注</label>
+            <input type="text" id="cron-comment" placeholder="例: 工作日早9点巡检" />
+          </div>
+          <div class="cron-presets">
+            <span class="preset-label">快速选择：</span>
+            <button class="btn-chip" data-expr="0 9 * * *">每天 9:00</button>
+            <button class="btn-chip" data-expr="0 9,18 * * *">每天 9:00 & 18:00</button>
+            <button class="btn-chip" data-expr="0 9 * * 1-5">工作日 9:00</button>
+            <button class="btn-chip" data-expr="0 */2 * * *">每 2 小时</button>
+          </div>
+          <button class="btn btn-primary" id="btn-cron-add">添加任务</button>
         </div>
       </section>
 

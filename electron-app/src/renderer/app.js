@@ -31,6 +31,7 @@ document.querySelectorAll('.nav-item').forEach(btn => {
     document.getElementById(panelId).classList.add('active')
     if (panelId === 'panel-files') refreshFiles()
     if (panelId === 'panel-chrome') refreshChromeStatus()
+    if (panelId === 'panel-cron') refreshCron()
   })
 })
 
@@ -159,6 +160,12 @@ async function loadConfig() {
   document.getElementById('cfg-interval').value   = check.interval   || ''
   document.getElementById('cfg-keep-days').value  = check.keep_days  || ''
 
+  const startup = cfg.startup || {}
+  const output  = cfg.output  || {}
+  document.getElementById('cfg-login-wait').value      = startup.login_wait_seconds ?? 30
+  document.getElementById('cfg-excel-to-desktop').checked   = output.excel_to_desktop  ?? true
+  document.getElementById('cfg-loop-export-excel').checked  = output.loop_export_excel ?? false
+
   document.getElementById('cfg-dd-webhook').value = notify.webhook || ''
   document.getElementById('cfg-dd-secret').value  = notify.secret  || ''
   document.getElementById('cfg-dd-enabled').checked = notify.enabled || false
@@ -182,6 +189,15 @@ async function saveSection(sectionKey) {
       threshold: parseFloat(document.getElementById('cfg-threshold').value) || 5,
       interval:  parseInt(document.getElementById('cfg-interval').value, 10) || 60,
       keep_days: parseInt(document.getElementById('cfg-keep-days').value, 10) || 7,
+    }
+    updated.startup = {
+      ...(cfg.startup || {}),
+      login_wait_seconds: parseInt(document.getElementById('cfg-login-wait').value, 10) ?? 30,
+    }
+    updated.output = {
+      ...(cfg.output || {}),
+      excel_to_desktop:  document.getElementById('cfg-excel-to-desktop').checked,
+      loop_export_excel: document.getElementById('cfg-loop-export-excel').checked,
     }
   }
 
@@ -278,6 +294,75 @@ async function refreshFiles() {
 }
 
 document.getElementById('btn-refresh-files').addEventListener('click', refreshFiles)
+
+// ── Cron panel ────────────────────────────────────────────────────────────────
+let _cronLines = []
+
+async function refreshCron() {
+  const r = await api.cronList()
+  _cronLines = r.lines || []
+  renderCronList(_cronLines)
+}
+
+function renderCronList(lines) {
+  const container = document.getElementById('cron-list')
+  if (!lines.length) {
+    container.innerHTML = '<div class="empty-state">暂无定时任务</div>'
+    return
+  }
+  container.innerHTML = lines.map((line, i) => `
+    <div class="cron-item">
+      <code class="cron-expr-display">${escapeHtml(line)}</code>
+      <button class="btn btn-danger" style="padding:3px 10px;font-size:12px" onclick="deleteCron(${i})">删除</button>
+    </div>
+  `).join('')
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+window.deleteCron = async function(index) {
+  if (!confirm(`确认删除第 ${index + 1} 条任务？`)) return
+  const r = await api.cronDelete(index)
+  if (r.ok) {
+    showToast('✅ 任务已删除')
+    await refreshCron()
+  } else {
+    showToast(`❌ ${r.msg}`)
+  }
+}
+
+document.getElementById('btn-refresh-cron').addEventListener('click', refreshCron)
+
+document.getElementById('btn-cron-add').addEventListener('click', async () => {
+  const expr    = document.getElementById('cron-expr').value.trim()
+  const comment = document.getElementById('cron-comment').value.trim()
+  if (!expr) { showToast('⚠️ 请输入 cron 表达式'); return }
+
+  // 拼装命令行，自动找 python 路径（同 main.js 逻辑：从 status.pythonBin 取）
+  const status = await api.getStatus()
+  const pyBin  = status.pythonBin || 'python3'
+  const dir    = status.scriptsDir || ''
+  const cmd    = `${expr}  cd "${dir}" && ${pyBin} main.py --no-login-wait${comment ? '  # ' + comment : ''}`
+
+  const r = await api.cronAdd(cmd)
+  if (r.ok) {
+    showToast('✅ 任务已添加')
+    document.getElementById('cron-expr').value = ''
+    document.getElementById('cron-comment').value = ''
+    await refreshCron()
+  } else {
+    showToast(`❌ ${r.msg}`)
+  }
+})
+
+// 快捷预设按钮
+document.querySelectorAll('.btn-chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('cron-expr').value = btn.dataset.expr
+  })
+})
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 function showToast(msg, durationMs = 2500) {

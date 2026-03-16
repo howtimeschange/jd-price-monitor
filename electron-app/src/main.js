@@ -441,3 +441,45 @@ ipcMain.handle('open-file', async (_, filePath) => {
   shell.openPath(filePath)
   return { ok: true }
 })
+
+// ── Cron task management ───────────────────────────────────────────────────────
+function parseCrontab() {
+  try {
+    const out = require('child_process').execSync('crontab -l 2>/dev/null || true', { encoding: 'utf8' })
+    const lines = out.split('\n').filter(l => l.trim() && !l.trim().startsWith('#'))
+    return lines
+  } catch (_) { return [] }
+}
+
+function writeCrontab(lines) {
+  const content = lines.join('\n') + '\n'
+  const tmpFile = path.join(require('os').tmpdir(), 'jd_cron_tmp')
+  fs.writeFileSync(tmpFile, content)
+  require('child_process').execSync(`crontab "${tmpFile}"`)
+  fs.unlinkSync(tmpFile)
+}
+
+ipcMain.handle('cron-list', async () => {
+  try {
+    return { ok: true, lines: parseCrontab() }
+  } catch (e) { return { ok: false, msg: e.message, lines: [] } }
+})
+
+ipcMain.handle('cron-add', async (_, entry) => {
+  try {
+    const lines = parseCrontab()
+    lines.push(entry)
+    writeCrontab(lines)
+    return { ok: true }
+  } catch (e) { return { ok: false, msg: e.message } }
+})
+
+ipcMain.handle('cron-delete', async (_, index) => {
+  try {
+    const lines = parseCrontab()
+    if (index < 0 || index >= lines.length) return { ok: false, msg: '索引越界' }
+    lines.splice(index, 1)
+    writeCrontab(lines)
+    return { ok: true }
+  } catch (e) { return { ok: false, msg: e.message } }
+})

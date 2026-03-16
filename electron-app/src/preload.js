@@ -27,6 +27,11 @@ contextBridge.exposeInMainWorld('api', {
   openFile: (p) => ipcRenderer.invoke('open-file', p),
   showInFinder: (p) => ipcRenderer.invoke('show-in-finder', p),
 
+  // Cron tasks
+  cronList: () => ipcRenderer.invoke('cron-list'),
+  cronAdd: (entry) => ipcRenderer.invoke('cron-add', entry),
+  cronDelete: (index) => ipcRenderer.invoke('cron-delete', index),
+
   // Events from main → renderer
   onLog: (cb) => {
     ipcRenderer.on('log', (_, msg) => cb(msg))
