@@ -1,0 +1,17 @@
+# 京东价格监控 - crontab 配置
+#
+# 使用方法：
+#   crontab -e
+#   将下面的行粘贴进去（按需选择一种方式）
+#
+# 方式一：每2小时执行一次（推荐，与 config.yaml 的 interval_minutes 保持一致）
+0 */2 * * * cd /Users/xingyicheng/lobsterai/project/jd-price-monitor && /usr/bin/python3 main.py >> logs/cron.log 2>&1
+#
+# 方式二：固定时间点执行（早8点、中12点、晚18点、晚22点）
+# 0 8,12,18,22 * * * cd /Users/xingyicheng/lobsterai/project/jd-price-monitor && /usr/bin/python3 main.py >> logs/cron.log 2>&1
+#
+# 注意：
+# 1. 确保 python3 路径正确，可用 `which python3` 查看
+# 2. 如果用 venv，替换为 venv 内的 python 路径，例如：
+#    /Users/xingyicheng/lobsterai/project/jd-price-monitor/venv/bin/python
+# 3. Mac 休眠时 crontab 不会执行，建议在 VPS 上运行
