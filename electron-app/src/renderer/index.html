@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JD Price Monitor</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Title bar -->
+  <div class="titlebar">
+    <div class="titlebar-drag"></div>
+    <div class="titlebar-title">京东价格监控</div>
+    <div class="titlebar-indicators">
+      <span class="indicator" id="ind-daemon" title="bb-browser Daemon">
+        <span class="dot"></span> Daemon
+      </span>
+      <span class="indicator" id="ind-chrome" title="Chrome CDP">
+        <span class="dot"></span> Chrome
+      </span>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <nav class="nav-menu">
+        <button class="nav-item active" data-panel="panel-run">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 2l10 6-10 6V2z" fill="currentColor"/></svg>
+          巡检运行
+        </button>
+        <button class="nav-item" data-panel="panel-shop">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="4" width="12" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M5 4V3a3 3 0 016 0v1" stroke="currentColor" stroke-width="1.5"/></svg>
+          店铺设置
+        </button>
+        <button class="nav-item" data-panel="panel-check">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13 4L6 11 3 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          巡检配置
+        </button>
+        <button class="nav-item" data-panel="panel-notify">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2a4.5 4.5 0 00-4.5 4.5v2L2 10h12l-1.5-1.5v-2A4.5 4.5 0 008 2z" stroke="currentColor" stroke-width="1.5"/><path d="M6.5 10.5v.5a1.5 1.5 0 003 0v-.5" stroke="currentColor" stroke-width="1.5"/></svg>
+          钉钉通知
+        </button>
+        <button class="nav-item" data-panel="panel-chrome">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2.5" fill="currentColor"/></svg>
+          Chrome 连接
+        </button>
+        <button class="nav-item" data-panel="panel-files">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 2h6l4 4v8H3V2z" stroke="currentColor" stroke-width="1.5"/><path d="M9 2v4h4" stroke="currentColor" stroke-width="1.5"/></svg>
+          数据文件
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+
+      <!-- Panel: 巡检运行 -->
+      <section class="panel active" id="panel-run">
+        <div class="panel-header">
+          <h2>巡检运行</h2>
+          <div class="header-actions">
+            <button class="btn btn-secondary" id="btn-open-data">打开数据目录</button>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="action-row">
+          <button class="btn btn-primary" id="btn-run-once">▶ 立即巡检</button>
+          <button class="btn btn-danger hidden" id="btn-stop-run">⏹ 停止</button>
+          <div class="separator"></div>
+          <button class="btn btn-secondary" id="btn-start-loop">⏰ 开始循环</button>
+          <button class="btn btn-danger hidden" id="btn-stop-loop">⏹ 停止循环</button>
+          <div class="loop-interval-wrap">
+            <label>间隔</label>
+            <input type="number" id="loop-interval" value="60" min="5" max="1440" />
+            <span>分钟</span>
+          </div>
+        </div>
+
+        <!-- Progress / status bar -->
+        <div class="status-bar" id="run-status-bar">
+          <span id="run-status-text">就绪</span>
+          <div class="progress-track hidden" id="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- Log area -->
+        <div class="log-section">
+          <div class="log-header">
+            <span>运行日志</span>
+            <button class="btn-text" id="btn-clear-log">清空</button>
+          </div>
+          <pre class="log-area" id="log-area"></pre>
+        </div>
+      </section>
+
+      <!-- Panel: 店铺设置 -->
+      <section class="panel" id="panel-shop">
+        <div class="panel-header"><h2>店铺设置</h2></div>
+        <div class="form-section">
+          <div class="form-row">
+            <label>店铺名称</label>
+            <input type="text" id="cfg-shop-name" placeholder="例: ASICS旗舰店" />
+          </div>
+          <div class="form-row">
+            <label>店铺 ID</label>
+            <input type="text" id="cfg-shop-id" placeholder="例: 1234567" />
+          </div>
+          <div class="form-row">
+            <label>Vendor ID</label>
+            <input type="text" id="cfg-vendor-id" placeholder="同 shop_id 可留空" />
+          </div>
+          <div class="form-row">
+            <label>CDP 端口</label>
+            <input type="number" id="cfg-cdp-port" placeholder="9222" value="9222" />
+          </div>
+          <button class="btn btn-primary" id="btn-save-shop">保存店铺设置</button>
+        </div>
+      </section>
+
+      <!-- Panel: 巡检配置 -->
+      <section class="panel" id="panel-check">
+        <div class="panel-header"><h2>巡检配置</h2></div>
+        <div class="form-section">
+          <div class="form-row">
+            <label>破价阈值 (%)</label>
+            <input type="number" id="cfg-threshold" placeholder="例: 5" step="0.1" />
+            <span class="form-hint">当前台价 &lt; 底价 × (1 - 阈值%) 时触发告警</span>
+          </div>
+          <div class="form-row">
+            <label>循环间隔 (分钟)</label>
+            <input type="number" id="cfg-interval" placeholder="60" min="5" />
+          </div>
+          <div class="form-row">
+            <label>保留天数</label>
+            <input type="number" id="cfg-keep-days" placeholder="7" min="1" />
+            <span class="form-hint">超过天数的历史文件自动清理</span>
+          </div>
+          <button class="btn btn-primary" id="btn-save-check">保存配置</button>
+        </div>
+      </section>
+
+      <!-- Panel: 钉钉通知 -->
+      <section class="panel" id="panel-notify">
+        <div class="panel-header"><h2>钉钉通知</h2></div>
+        <div class="form-section">
+          <div class="form-row">
+            <label>Webhook URL</label>
+            <input type="text" id="cfg-dd-webhook" placeholder="https://oapi.dingtalk.com/robot/send?access_token=..." />
+          </div>
+          <div class="form-row">
+            <label>Secret (可选)</label>
+            <input type="text" id="cfg-dd-secret" placeholder="SEC..." />
+          </div>
+          <div class="form-row">
+            <label class="toggle-label">
+              <input type="checkbox" id="cfg-dd-enabled" />
+              启用钉钉通知
+            </label>
+          </div>
+          <button class="btn btn-primary" id="btn-save-notify">保存通知设置</button>
+        </div>
+      </section>
+
+      <!-- Panel: Chrome 连接 -->
+      <section class="panel" id="panel-chrome">
+        <div class="panel-header"><h2>Chrome 连接</h2></div>
+        <div class="form-section">
+          <p class="section-desc">监控需要通过 Chrome 访问京东店铺页面。<br/>Chrome 必须以远程调试模式运行（端口 9222）。</p>
+
+          <div class="status-card" id="chrome-status-card">
+            <div class="status-card-dot" id="chrome-dot"></div>
+            <div class="status-card-text">
+              <strong>Chrome CDP 状态</strong>
+              <span id="chrome-status-text">检测中…</span>
+            </div>
+          </div>
+
+          <div class="status-card" id="daemon-status-card">
+            <div class="status-card-dot" id="daemon-dot"></div>
+            <div class="status-card-text">
+              <strong>bb-browser Daemon</strong>
+              <span id="daemon-status-text">检测中…</span>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-primary" id="btn-launch-chrome">启动 Chrome (CDP)</button>
+            <button class="btn btn-secondary" id="btn-check-chrome">刷新状态</button>
+            <button class="btn btn-secondary" id="btn-start-daemon">启动 Daemon</button>
+          </div>
+
+          <div class="hint-box">
+            <p>💡 点击"启动 Chrome"会自动：</p>
+            <ol>
+              <li>退出已打开的 Chrome（如有）</li>
+              <li>以 <code>--remote-debugging-port=9222</code> 重新打开 Chrome</li>
+            </ol>
+            <p>之后请在 Chrome 中<strong>登录京东账号</strong>，再返回此处运行巡检。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel: 数据文件 -->
+      <section class="panel" id="panel-files">
+        <div class="panel-header">
+          <h2>数据文件</h2>
+          <button class="btn btn-secondary" id="btn-refresh-files">刷新</button>
+        </div>
+        <div class="file-list" id="file-list">
+          <div class="empty-state">暂无数据文件</div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

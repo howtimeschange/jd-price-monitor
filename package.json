@@ -1,0 +1,18 @@
+{
+  "name": "jd-price-monitor-build",
+  "private": true,
+  "description": "Build tooling for JD Price Monitor desktop app",
+  "author": "LobsterAI",
+  "scripts": {
+    "start":          "env -u ELECTRON_RUN_AS_NODE electron electron-app",
+    "download-python":"bash electron-app/scripts/download-python.sh",
+    "build":          "bash electron-app/scripts/build.sh",
+    "dist":           "CSC_IDENTITY_AUTO_DISCOVERY=false env -u ELECTRON_RUN_AS_NODE electron-builder --config electron-app/electron-builder.yml",
+    "dist:arm64":     "CSC_IDENTITY_AUTO_DISCOVERY=false env -u ELECTRON_RUN_AS_NODE electron-builder --config electron-app/electron-builder.yml --mac --arm64",
+    "dist:x64":       "CSC_IDENTITY_AUTO_DISCOVERY=false env -u ELECTRON_RUN_AS_NODE electron-builder --config electron-app/electron-builder.yml --mac --x64"
+  },
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^25.0.0"
+  }
+}

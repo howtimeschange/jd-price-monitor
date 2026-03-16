@@ -1,0 +1,51 @@
+appId: com.lobsterai.jd-price-monitor
+productName: JD Price Monitor
+copyright: "Copyright © 2024"
+
+directories:
+  # app: relative to project root (where electron-builder is run from)
+  app: electron-app
+  output: electron-app/dist
+  buildResources: electron-app/assets
+
+mac:
+  category: public.app-category.business
+  icon: electron-app/assets/icon.icns
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  target:
+    - target: dmg
+      arch:
+        - arm64
+
+dmg:
+  title: JD Price Monitor
+  window:
+    width: 540
+    height: 380
+
+# Files to pack into the asar (relative to directories.app = electron-app/)
+files:
+  - "src/**/*"
+  - "package.json"
+  - "node_modules/**/*"
+  - "!node_modules/bb-browser/**"
+
+extraResources:
+  # Python scripts from project root (one level up from electron-app/)
+  - from: "."
+    to: python-scripts
+    filter:
+      - main.py
+      - config.yaml
+      - "src/**/*.py"
+      - "adapters/**/*.js"
+  # Bundled Python interpreter
+  - from: electron-app/resources/python
+    to: python
+  # bb-browser (outside asar so .js files are accessible)
+  - from: electron-app/node_modules/bb-browser
+    to: bb-browser
+
+asarUnpack:
+  - "**/*.node"

@@ -1,0 +1,15 @@
+{
+  "name": "jd-price-monitor",
+  "productName": "JD Price Monitor",
+  "version": "1.0.0",
+  "description": "京东 ASICS 专卖店价格监控桌面端",
+  "author": "LobsterAI",
+  "main": "src/main.js",
+  "scripts": {
+    "install-deps": "npm install"
+  },
+  "dependencies": {
+    "bb-browser": "^0.8.3",
+    "js-yaml": "^4.1.0"
+  }
+}

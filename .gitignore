@@ -28,3 +28,12 @@ logs/
 .idea/
 *.swp
 *.swo
+
+# Node / Electron app
+node_modules/
+package-lock.json
+electron-app/node_modules/
+electron-app/dist/
+electron-app/resources/python/
+electron-app/test_*.js
+electron-app/test_*.json
