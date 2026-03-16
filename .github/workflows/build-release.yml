@@ -1,0 +1,173 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'          # 推 v1.0.0 这样的 tag 时触发
+  workflow_dispatch:   # 也支持手动触发
+
+permissions:
+  contents: write      # 允许创建 Release 和上传文件
+
+jobs:
+  # ── macOS DMG ──────────────────────────────────────────────────────────────
+  build-mac:
+    runs-on: macos-14   # Apple Silicon runner
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: electron-app/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd electron-app
+          npm ci
+
+      - name: Download bundled Python (arm64)
+        run: bash electron-app/scripts/download-python.sh
+
+      - name: Build macOS DMG
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: |
+          npx --prefix electron-app electron-builder \
+            --mac dmg \
+            --arm64 \
+            --config electron-app/electron-builder.yml
+
+      - name: Build macOS DMG (x64)
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: |
+          # Download x64 python
+          ARCH=x86_64 bash electron-app/scripts/download-python.sh || true
+          npx --prefix electron-app electron-builder \
+            --mac dmg \
+            --x64 \
+            --config electron-app/electron-builder.yml
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-dist
+          path: electron-app/dist/*.dmg
+          retention-days: 1
+
+  # ── Windows EXE ────────────────────────────────────────────────────────────
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: electron-app/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd electron-app
+          npm ci
+
+      - name: Download bundled Python (Windows x64)
+        shell: pwsh
+        run: |
+          $PYTHON_VERSION = "3.11.9"
+          $PYTHON_RELEASE = "20240814"
+          $FILENAME = "cpython-$PYTHON_VERSION+$PYTHON_RELEASE-x86_64-pc-windows-msvc-install_only.tar.gz"
+          $URL = "https://github.com/indygreg/python-build-standalone/releases/download/$PYTHON_RELEASE/$FILENAME"
+          $DEST = "electron-app/resources/python"
+          
+          if (Test-Path "$DEST/python.exe") {
+            Write-Host "Python already present, skipping"
+            exit 0
+          }
+          
+          Write-Host "Downloading Python $PYTHON_VERSION for Windows x64..."
+          $TMP = [System.IO.Path]::GetTempFileName() + ".tar.gz"
+          Invoke-WebRequest -Uri $URL -OutFile $TMP
+          
+          New-Item -ItemType Directory -Force -Path $DEST | Out-Null
+          tar -xzf $TMP -C $DEST --strip-components=1
+          Remove-Item $TMP
+          
+          Write-Host "Python installed to $DEST"
+          Get-ChildItem $DEST
+
+      - name: Install Python dependencies
+        shell: pwsh
+        run: |
+          $PIP = "electron-app/resources/python/python.exe"
+          & $PIP -m pip install --upgrade pip --quiet
+          & $PIP -m pip install -r requirements.txt --quiet
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          cd electron-app
+          npx electron-builder --win nsis --x64 --config electron-builder.yml
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-dist
+          path: electron-app/dist/*.exe
+          retention-days: 1
+
+  # ── Create GitHub Release ──────────────────────────────────────────────────
+  release:
+    needs: [build-mac, build-windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: mac-dist
+          path: dist/mac
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: win-dist
+          path: dist/win
+
+      - name: List artifacts
+        run: ls -lh dist/mac/ dist/win/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "JD Price Monitor ${{ github.ref_name }}"
+          body: |
+            ## 📦 下载
+
+            | 平台 | 文件 | 说明 |
+            |------|------|------|
+            | macOS (Apple Silicon) | `*-arm64.dmg` | M1/M2/M3/M4 Mac |
+            | macOS (Intel) | `*-x64.dmg` | Intel Mac |
+            | Windows | `*-Setup.exe` | Windows 10/11 x64 |
+
+            ## 使用前提
+
+            - Chrome 浏览器（App 内一键启动调试模式）
+            - 首次使用需在 Chrome 中登录京东账号
+
+            ## 更新内容
+
+            详见 [CHANGELOG](https://github.com/howtimeschange/jd-price-monitor/commits/main)
+          files: |
+            dist/mac/*.dmg
+            dist/win/*.exe
+          draft: false
+          prerelease: false
+          generate_release_notes: true

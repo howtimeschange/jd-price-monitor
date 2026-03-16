@@ -16,9 +16,12 @@ function isPkg() { return app.isPackaged }
 
 function getPythonBin() {
   if (isPkg()) {
-    return path.join(process.resourcesPath, 'python', 'bin', 'python3')
+    // Windows: python/python.exe  |  macOS/Linux: python/bin/python3
+    const winBin = path.join(process.resourcesPath, 'python', 'python.exe')
+    const unixBin = path.join(process.resourcesPath, 'python', 'bin', 'python3')
+    return process.platform === 'win32' ? winBin : unixBin
   }
-  return 'python3'
+  return process.platform === 'win32' ? 'python' : 'python3'
 }
 
 function getPythonScriptsDir() {

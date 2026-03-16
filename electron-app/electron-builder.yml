@@ -3,7 +3,6 @@ productName: JD Price Monitor
 copyright: "Copyright © 2024"
 
 directories:
-  # app: relative to project root (where electron-builder is run from)
   app: electron-app
   output: electron-app/dist
   buildResources: electron-app/assets
@@ -17,6 +16,26 @@ mac:
     - target: dmg
       arch:
         - arm64
+        - x64
+
+win:
+  icon: electron-app/assets/icon.png
+  target:
+    - target: nsis
+      arch:
+        - x64
+  requestedExecutionLevel: asInvoker
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: electron-app/assets/icon.png
+  uninstallerIcon: electron-app/assets/icon.png
+  installerHeaderIcon: electron-app/assets/icon.png
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: JD Price Monitor
 
 dmg:
   title: JD Price Monitor
