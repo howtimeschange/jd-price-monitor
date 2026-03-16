@@ -113,8 +113,7 @@ jobs:
       - name: Build Windows installer
         shell: pwsh
         run: |
-          cd electron-app
-          npx electron-builder --win nsis --x64 --config electron-builder.yml
+          npx --prefix electron-app electron-builder --win nsis --x64 --config electron-app/electron-builder.yml
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
