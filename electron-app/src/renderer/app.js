@@ -70,6 +70,13 @@ function applyStatus(s) {
   } else {
     $progressTrack.classList.add('hidden')
   }
+
+  // 停止按钮：运行时 enabled，否则 disabled
+  document.getElementById('btn-stop-run').disabled  = !s.running
+  document.getElementById('btn-stop-loop').disabled = !s.looping
+  // kill-bar 显隐
+  const killBar = document.getElementById('kill-bar')
+  if (killBar) killBar.classList.toggle('hidden', !s.running && !s.looping)
 }
 
 // ── IPC events ────────────────────────────────────────────────────────────────
@@ -90,10 +97,16 @@ api.onStatus(({ key, value }) => {
     document.body.classList.toggle('running', value)
     $runStatus.textContent = value ? '🔄 运行中…' : '就绪'
     $progressTrack.classList.toggle('hidden', !value)
+    document.getElementById('btn-stop-run').disabled = !value
+    const killBar = document.getElementById('kill-bar')
+    if (killBar) killBar.classList.toggle('hidden', !value && !state.looping)
   }
   if (key === 'looping') {
     state.looping = value
     document.body.classList.toggle('looping', value)
+    document.getElementById('btn-stop-loop').disabled = !value
+    const killBar = document.getElementById('kill-bar')
+    if (killBar) killBar.classList.toggle('hidden', !state.running && !value)
   }
 })
 
@@ -137,6 +150,14 @@ $btnStartLoop.addEventListener('click', async () => {
 
 $btnStopLoop.addEventListener('click', async () => {
   await api.stopLoop()
+})
+
+// ── Kill All ──────────────────────────────────────────────────────────────────
+document.getElementById('btn-kill-all')?.addEventListener('click', async () => {
+  if (!confirm('确认强制终止所有正在运行的任务？')) return
+  if (state.running)  await api.stopRun()
+  if (state.looping)  await api.stopLoop()
+  showToast('🛑 已终止全部任务')
 })
 
 // ── Data dir button ───────────────────────────────────────────────────────────

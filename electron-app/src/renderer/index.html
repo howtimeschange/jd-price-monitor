@@ -71,15 +71,21 @@
         <!-- Action buttons -->
         <div class="action-row">
           <button class="btn btn-primary" id="btn-run-once">▶ 立即巡检</button>
-          <button class="btn btn-danger hidden" id="btn-stop-run">⏹ 停止</button>
+          <button class="btn btn-danger" id="btn-stop-run" disabled>⏹ 停止巡检</button>
           <div class="separator"></div>
           <button class="btn btn-secondary" id="btn-start-loop">⏰ 开始循环</button>
-          <button class="btn btn-danger hidden" id="btn-stop-loop">⏹ 停止循环</button>
+          <button class="btn btn-danger" id="btn-stop-loop" disabled>⏹ 停止循环</button>
           <div class="loop-interval-wrap">
             <label>间隔</label>
             <input type="number" id="loop-interval" value="60" min="5" max="1440" />
             <span>分钟</span>
           </div>
+        </div>
+
+        <!-- Kill-all emergency bar (visible only when something is running) -->
+        <div class="kill-bar hidden" id="kill-bar">
+          <span class="kill-bar-label">⚡ 任务进行中</span>
+          <button class="btn btn-danger btn-kill-all" id="btn-kill-all">🛑 强制终止全部</button>
         </div>
 
         <!-- Progress / status bar -->

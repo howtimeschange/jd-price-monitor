@@ -545,3 +545,28 @@ body.looping #btn-stop-loop { display: inline-flex; }
   padding: 3px 10px; border-radius: 12px; font-size: 12px; cursor: pointer;
 }
 .btn-chip:hover { border-color: #4FC3F7; color: #4FC3F7; }
+
+/* ── Kill bar ─────────────────────────────────────────────── */
+.kill-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; margin: 8px 0;
+  background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.4);
+  border-radius: 8px; animation: pulse-border 2s ease-in-out infinite;
+}
+.kill-bar.hidden { display: none; }
+.kill-bar-label { font-size: 13px; color: #fca5a5; font-weight: 500; }
+.btn-kill-all {
+  background: #ef4444 !important; color: #fff !important;
+  font-weight: 700; padding: 6px 16px; font-size: 13px;
+}
+.btn-kill-all:hover { background: #dc2626 !important; }
+
+@keyframes pulse-border {
+  0%,100% { border-color: rgba(239,68,68,0.4); }
+  50%      { border-color: rgba(239,68,68,0.9); }
+}
+
+/* 停止按钮 disabled 状态变灰 */
+.btn.btn-danger:disabled {
+  background: #374151; color: #6b7280; cursor: not-allowed; opacity: 0.5;
+}
