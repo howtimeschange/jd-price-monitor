@@ -40,18 +40,18 @@ def navigate_and_wait(url: str) -> bool:
     bb(["tab", tab])
     # 导航
     bb(["eval", f"location.href='{url}'", "--tab", tab])
-    # 轮询等待 jSubObject 出现（最多 20 秒）
-    for _ in range(20):
+    # 轮询等待 jSubObject 出现（最多 25 秒）
+    for _ in range(25):
         time.sleep(1)
         r = bb(["eval", "document.querySelectorAll('li.jSubObject').length", "--tab", tab], timeout=5)
         try:
             if int(r.stdout.strip()) > 0:
-                time.sleep(1)  # 等价格 JS 渲染
+                time.sleep(5)  # 等价格 JS 渲染（保守 5 秒）
                 return True
         except Exception:
             pass
-    # 超时后额外等 3 秒
-    time.sleep(3)
+    # 超时后额外等 5 秒
+    time.sleep(5)
     return False
 
 

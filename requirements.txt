@@ -1,3 +1,7 @@
-playwright==1.44.0
-pyyaml==6.0.1
-python-dateutil==2.9.0
+pyyaml>=6.0.1
+python-dateutil>=2.9.0
+openpyxl>=3.1.0
+
+# CLI 界面
+rich>=13.0.0
+questionary>=2.0.0

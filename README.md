@@ -14,16 +14,17 @@
 
 ```
 jd-price-monitor/
-├── config.yaml               # 主配置文件（必须编辑）
-├── main.py                   # 主监控入口（破价巡检 + 钉钉告警）
-├── scrape_list.py            # 一键导出全店商品价格到 Excel
+├── cli.py                    # ✨ 交互式 CLI 入口（推荐）
+├── config.yaml               # 主配置文件
+├── main.py                   # 巡检核心逻辑（可独立运行）
+├── scrape_list.py            # 价格导出核心逻辑（可独立运行）
 ├── requirements.txt          # Python 依赖
 ├── crontab.example           # 定时任务示例
 ├── adapters/
 │   └── jd/
 │       └── shop-prices.js    # bb-browser 适配器（复制到 ~/.bb-browser/bb-sites/jd/）
 └── src/
-    ├── config.py             # 配置加载
+    ├── config.py             # 配置加载 & 保存
     ├── sku_fetcher.py        # 店铺 SKU 列表抓取
     ├── price_fetcher.py      # 前台价格抓取
     ├── checker.py            # 破价检测逻辑
@@ -105,31 +106,53 @@ dingtalk:
 
 ## 使用方式
 
-### 导出全店商品价格到 Excel
+### 推荐：交互式 CLI
 
 ```bash
+python cli.py
+```
+
+启动后显示主菜单，可完成所有操作：
+
+```
+  JD Price Monitor  京东价格监控系统
+
+  当前配置
+  店铺      ASICS亚瑟士京东自营旗舰店
+  阈值      50折  (50%)
+  巡检间隔  120 分钟
+  Webhook   ✅ 已配置
+
+  请选择操作：
+  > 📦  导出全店商品价格  →  Excel
+    🔍  立即执行一次破价巡检
+    🔁  循环巡检（按间隔自动运行）
+    ⏰  创建系统定时任务（cron）
+    ⚙️   设置  —  店铺 / 阈值 / Webhook
+    ❌  退出
+```
+
+**设置菜单**支持：
+- 粘贴任意京东店铺 URL，自动解析 shop_id
+- 修改破价阈值（如输入 `50` 即 5折）
+- 配置钉钉 Webhook，支持加签 + 一键测试
+- 修改巡检间隔
+
+**循环巡检**支持前台运行和后台进程两种模式。
+
+**定时任务**支持自动写入 crontab（macOS/Linux）或复制到剪贴板。
+
+### 命令行直接运行
+
+```bash
+# 导出价格 Excel
 python scrape_list.py
-```
 
-会生成 `data/asics_price_list.xlsx`，包含：SKU ID、商品名称、页面价、原价、商品链接。
-
-### 执行一次破价巡检
-
-```bash
+# 单次巡检
 python main.py
-```
 
-### 循环巡检（按配置间隔自动运行）
-
-```bash
+# 循环巡检
 python main.py --loop
-```
-
-### 定时任务（crontab）
-
-```bash
-crontab -e
-# 参考 crontab.example
 ```
 
 ---
