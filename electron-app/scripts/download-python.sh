@@ -44,7 +44,10 @@ PYTHON_BIN="$DEST_DIR/bin/python3"
 # ── Install Python deps ───────────────────────────────────────────────────────
 echo "▶ Installing Python dependencies …"
 "$PYTHON_BIN" -m pip install --upgrade pip --quiet
-"$PYTHON_BIN" -m pip install pyyaml openpyxl python-dateutil requests --quiet
+"$PYTHON_BIN" -m pip install \
+  pyyaml openpyxl python-dateutil requests \
+  fastapi uvicorn httpx \
+  --quiet
 
 echo ""
 echo "✅ Done! Python ready at: $DEST_DIR"

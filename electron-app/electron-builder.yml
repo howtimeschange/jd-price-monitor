@@ -60,6 +60,9 @@ extraResources:
       - config.yaml
       - "src/**/*.py"
       - "adapters/**/*.js"
+  # Backend FastAPI server
+  - from: electron-app/backend
+    to: backend
   # Bundled Python interpreter
   - from: electron-app/resources/python
     to: python

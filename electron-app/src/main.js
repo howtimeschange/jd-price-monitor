@@ -327,7 +327,8 @@ async function launchChrome(port = 9222, customPath = '') {
       } else {
         execSync(`osascript -e 'quit app "Google Chrome"'`, { timeout: 5000 })
       }
-      await new Promise(r => setTimeout(r, 1500))
+      // 等待 Chrome 完全退出
+      await new Promise(r => setTimeout(r, 2500))
     } catch (_) {
       // Chrome wasn't running — fine
     }
@@ -341,15 +342,15 @@ async function launchChrome(port = 9222, customPath = '') {
     ], { detached: !isWin, stdio: 'ignore' })
     if (!isWin) chromeProc.unref()
 
-    // Wait for CDP to become available
-    for (let i = 0; i < 20; i++) {
+    // Wait for CDP to become available（最多等 30 秒）
+    for (let i = 0; i < 50; i++) {
       await new Promise(r => setTimeout(r, 600))
       if (await probeTcp(port)) {
         sendStatus('chrome', true)
         return { ok: true, msg: `Chrome launched with CDP on port ${port}` }
       }
     }
-    return { ok: false, msg: 'Chrome launched but CDP not responding' }
+    return { ok: false, msg: 'Chrome launched but CDP not responding — 请手动确认 Chrome 已打开，或在 Chrome 连接页面点击「刷新状态」' }
   } else {
     // Chrome already running with CDP — ensure JD tab exists
     try {

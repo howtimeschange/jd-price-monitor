@@ -183,6 +183,7 @@ jobs:
           $PIP = "electron-app/resources/python/python.exe"
           & $PIP -m pip install --upgrade pip --quiet
           & $PIP -m pip install -r requirements.txt --quiet
+          & $PIP -m pip install fastapi uvicorn httpx --quiet
 
       - name: Build Windows installer
         shell: pwsh
