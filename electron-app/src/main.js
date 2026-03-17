@@ -85,11 +85,21 @@ function createWindow() {
   mainWindow.on('closed', () => { mainWindow = null })
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+
+  // 自动启动 Chrome（调试模式）
+  log('🚀 正在自动启动 Chrome 调试模式…')
+  const chromeResult = await launchChrome()
+  log(`Chrome: ${chromeResult.msg}`)
+
+  // 标记 daemon 为就绪（bb-browser 直接 CLI 调用，无需 daemon server）
+  daemonReady = true
+  sendStatus('daemon', true)
+  log('✅ bb-browser 已就绪（直接 CLI 模式）')
 })
 
 app.on('window-all-closed', () => {
@@ -218,6 +228,7 @@ async function launchChrome(port = 9222) {
       `--remote-debugging-port=${port}`,
       '--no-first-run',
       '--no-default-browser-check',
+      'https://www.jd.com',
     ], { detached: true, stdio: 'ignore' }).unref()
 
     // Wait for CDP to become available
@@ -230,6 +241,22 @@ async function launchChrome(port = 9222) {
     }
     return { ok: false, msg: 'Chrome launched but CDP not responding' }
   } else {
+    // Chrome already running with CDP — ensure JD tab exists
+    try {
+      const http = require('http')
+      const tabs = await new Promise((resolve) => {
+        http.get(`http://127.0.0.1:${port}/json`, (res) => {
+          let data = ''
+          res.on('data', d => data += d)
+          res.on('end', () => { try { resolve(JSON.parse(data)) } catch { resolve([]) } })
+        }).on('error', () => resolve([]))
+      })
+      const hasJd = tabs.some(t => t.type === 'page' && t.url && t.url.includes('jd.com'))
+      if (!hasJd) {
+        spawn(chromePath, ['https://www.jd.com'], { detached: true, stdio: 'ignore' }).unref()
+        log('已在 Chrome 中打开京东页面')
+      }
+    } catch (_) {}
     sendStatus('chrome', true)
     return { ok: true, msg: `Chrome CDP already available on port ${port}` }
   }

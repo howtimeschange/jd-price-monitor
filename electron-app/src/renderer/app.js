@@ -118,12 +118,6 @@ async function init() {
   appendLog(`[系统] JD Price Monitor 已启动`)
   appendLog(`[系统] Python: ${status.pythonBin}`)
   appendLog(`[系统] 脚本目录: ${status.scriptsDir}`)
-
-  if (!status.daemon) {
-    appendLog('[系统] bb-browser daemon 未运行，正在启动…')
-    const r = await api.startDaemon()
-    appendLog(`[系统] Daemon: ${r.msg}`)
-  }
 }
 
 init()

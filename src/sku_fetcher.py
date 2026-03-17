@@ -48,13 +48,29 @@ def _find_bb_browser() -> str:
     try:
         r = subprocess.run(["npm", "root", "-g"], capture_output=True, text=True, timeout=5)
         npm_root = r.stdout.strip()
-        candidate = os.path.join(npm_root, ".bin", "bb-browser")
-        if os.path.isfile(candidate):
-            _BB_BIN = candidate
-            logger.info(f"bb-browser 找到（npm root）：{_BB_BIN}")
-            return _BB_BIN
+        # 尝试多个可能的 bin 路径
+        npm_bin_candidates = [
+            os.path.join(npm_root, ".bin", "bb-browser"),           # 标准 .bin
+            os.path.join(os.path.dirname(npm_root), "bin", "bb-browser"),  # npm-global/bin
+        ]
+        for candidate in npm_bin_candidates:
+            if os.path.isfile(candidate):
+                _BB_BIN = candidate
+                logger.info(f"bb-browser 找到（npm root）：{_BB_BIN}")
+                return _BB_BIN
     except Exception:
         pass
+
+    # 4. 直接检查常见 npm-global 路径
+    for extra in [
+        os.path.expanduser("~/.npm-global/bin/bb-browser"),
+        "/usr/local/bin/bb-browser",
+        "/opt/homebrew/bin/bb-browser",
+    ]:
+        if os.path.isfile(extra):
+            _BB_BIN = extra
+            logger.info(f"bb-browser 找到（fallback）：{_BB_BIN}")
+            return _BB_BIN
 
     raise FileNotFoundError(
         "找不到 bb-browser 命令。\n"
