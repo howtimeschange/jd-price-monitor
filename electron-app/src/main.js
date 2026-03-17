@@ -51,8 +51,20 @@ function getNodeBin() {
       const which = require('child_process').execSync('which node', { encoding: 'utf8' }).trim()
       if (which) return which
     } catch (_) {}
+    // Windows dev: try where node
+    if (process.platform === 'win32') {
+      try {
+        const which = require('child_process').execSync('where node', { encoding: 'utf8' }).split('\n')[0].trim()
+        if (which) return which
+      } catch (_) {}
+    }
   }
   return process.execPath  // Will be used with ELECTRON_RUN_AS_NODE=1
+}
+
+// 判断 getNodeBin() 返回的是否是 Electron 可执行文件（需要 ELECTRON_RUN_AS_NODE=1）
+function nodeNeedsElectronFlag() {
+  return getNodeBin() === process.execPath
 }
 
 function getDataDir() {
@@ -150,6 +162,11 @@ async function startBackend() {
       PYTHONUTF8: '1',
       // 告知 server.py 内嵌资源根路径，用于定位 python / python-scripts 等目录
       ELECTRON_RESOURCES_PATH: isPkg() ? process.resourcesPath : '',
+      // bb-browser 内嵌路径，供 sku_fetcher.py 定位
+      ELECTRON_BB_BROWSER_SCRIPT: getBbDaemonScript(),
+      ELECTRON_NODE_BIN: getNodeBin(),
+      // 若 node 是 Electron 可执行文件，Python 调用时需设置 ELECTRON_RUN_AS_NODE=1
+      ELECTRON_NODE_NEEDS_FLAG: nodeNeedsElectronFlag() ? '1' : '',
     },
   })
 
@@ -409,6 +426,12 @@ function runPython(args) {
         ...process.env,
         PYTHONIOENCODING: 'utf-8',
         PYTHONUTF8: '1',
+        ELECTRON_RESOURCES_PATH: isPkg() ? process.resourcesPath : '',
+        // bb-browser 内嵌路径，供 sku_fetcher.py 定位
+        ELECTRON_BB_BROWSER_SCRIPT: getBbDaemonScript(),
+        ELECTRON_NODE_BIN: getNodeBin(),
+        // 若 node 是 Electron 可执行文件，Python 调用时需设置 ELECTRON_RUN_AS_NODE=1
+        ELECTRON_NODE_NEEDS_FLAG: nodeNeedsElectronFlag() ? '1' : '',
       },
     })
 

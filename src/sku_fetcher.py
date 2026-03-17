@@ -6,6 +6,7 @@ SKU 列表 + 价格抓取模块（bb-browser 实现）
 """
 import json
 import logging
+import os
 import re
 import subprocess
 import time
@@ -21,7 +22,7 @@ _BB_BIN: str = None
 def _find_bb_browser() -> str:
     """
     查找 bb-browser 可执行文件的完整路径。
-    优先级：PATH > nvm 目录 > npm root -g
+    优先级：打包内嵌 > PATH > nvm 目录 > npm root -g
     """
     global _BB_BIN
     if _BB_BIN:
@@ -29,11 +30,28 @@ def _find_bb_browser() -> str:
 
     import shutil, glob, os
 
+    # 0. 打包版内嵌 bb-browser（Electron extraResources）
+    # main.js 通过 ELECTRON_BB_BROWSER_SCRIPT 传入 cli.js 路径
+    # 通过 ELECTRON_NODE_BIN 传入 node 可执行路径
+    env_script = os.environ.get("ELECTRON_BB_BROWSER_SCRIPT", "")
+    env_node   = os.environ.get("ELECTRON_NODE_BIN", "")
+    if env_script and os.path.isfile(env_script) and env_node and os.path.isfile(env_node):
+        _BB_BIN = f"{env_node}||{env_script}"  # 特殊分隔符，_bb() 里解析
+        logger.info(f"bb-browser 找到（打包内嵌）：node={env_node} script={env_script}")
+        return _BB_BIN
+
     # 1. 直接在 PATH 里找
     found = shutil.which("bb-browser")
     if found:
         _BB_BIN = found
         return _BB_BIN
+
+    # Windows: 也尝试 bb-browser.cmd
+    if os.name == "nt":
+        found_cmd = shutil.which("bb-browser.cmd")
+        if found_cmd:
+            _BB_BIN = found_cmd
+            return _BB_BIN
 
     # 2. nvm 目录遍历
     nvm_dir = os.path.expanduser("~/.nvm/versions/node")
@@ -81,10 +99,18 @@ def _find_bb_browser() -> str:
 
 def _bb(args: list, cdp_port: str, timeout: int = 15):
     bb = _find_bb_browser()
-    return subprocess.run(
-        [bb] + args + ["--port", cdp_port],
-        capture_output=True, text=True, timeout=timeout,
-    )
+    # 打包内嵌格式：node_bin||script_path
+    if "||" in bb:
+        node_bin, script = bb.split("||", 1)
+        cmd = [node_bin, script] + args + ["--port", cdp_port]
+        # 若 node 是 Electron 可执行文件，需要 ELECTRON_RUN_AS_NODE=1
+        env = dict(os.environ)
+        if os.environ.get("ELECTRON_NODE_NEEDS_FLAG") == "1":
+            env["ELECTRON_RUN_AS_NODE"] = "1"
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
+    else:
+        cmd = [bb] + args + ["--port", cdp_port]
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
 
 def _get_jd_tab(cdp_port: str) -> str:
