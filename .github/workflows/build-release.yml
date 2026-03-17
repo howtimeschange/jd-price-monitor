@@ -105,21 +105,23 @@ jobs:
                   os.chmod(fix_dst, 0o755)
                   print(f"  Added fix script: {script_dst_name}")
 
-                  # Repack
-                  new_dmg = dmg + ".new"
+                  # Repack — hdiutil auto-appends .dmg, so use a name without it
+                  new_dmg_base = dmg + ".new"
                   r = subprocess.run(
                       ["hdiutil", "create",
                        "-volname", "JD Price Monitor",
                        "-srcfolder", staging,
                        "-ov", "-format", "UDZO",
-                       new_dmg],
+                       new_dmg_base],
                       capture_output=True, text=True
                   )
                   if r.returncode != 0:
                       print(f"  Create failed: {r.stderr}")
                       continue
 
-                  os.replace(new_dmg, dmg)
+                  # hdiutil appends .dmg automatically
+                  actual_new = new_dmg_base if os.path.exists(new_dmg_base) else new_dmg_base + ".dmg"
+                  os.replace(actual_new, dmg)
                   print(f"  Done: {dmg}")
 
           PYEOF
