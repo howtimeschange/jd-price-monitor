@@ -109,10 +109,9 @@ app.whenReady().then(async () => {
 })
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit()
-  // On mac: stop daemon and backend too
   stopBbDaemon()
   stopBackend()
+  if (process.platform !== 'darwin') app.quit()
 })
 
 // ── Backend server (FastAPI) ──────────────────────────────────────────────────
@@ -178,7 +177,14 @@ async function startBackend() {
 
 function stopBackend() {
   if (backendProcess) {
-    backendProcess.kill()
+    if (process.platform === 'win32') {
+      // Windows: SIGTERM 不可靠，用 taskkill 强制终止整个进程树
+      try {
+        execSync(`taskkill /F /T /PID ${backendProcess.pid}`, { timeout: 3000 })
+      } catch (_) {}
+    } else {
+      backendProcess.kill('SIGTERM')
+    }
     backendProcess = null
   }
 }

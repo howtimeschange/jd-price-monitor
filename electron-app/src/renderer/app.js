@@ -534,7 +534,11 @@ async function sendAiMessage(text) {
         if (data === '[DONE]') break
         try {
           const obj = JSON.parse(data)
-          if (obj.text) {
+          if (obj.error) {
+            fullText += `\n❌ ${obj.error}`
+            contentSpan.innerHTML = renderMarkdown(fullText)
+            aiMessages.scrollTop = aiMessages.scrollHeight
+          } else if (obj.text) {
             fullText += obj.text
             contentSpan.innerHTML = renderMarkdown(fullText)
             aiMessages.scrollTop = aiMessages.scrollHeight
