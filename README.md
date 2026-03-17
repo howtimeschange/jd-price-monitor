@@ -244,7 +244,17 @@ jd-price-monitor/
 | macOS（Intel）| `JD.Price.Monitor-*-x64.dmg` | Intel 芯片 |
 | Windows 10/11 | `JD-Price-Monitor-Setup-*.exe` | x64 安装程序（NSIS） |
 
-> **macOS 首次打开提示「无法验证开发者」**：在访达中右键 → 打开，或前往「系统设置 → 隐私与安全性」点击「仍要打开」。
+> **⚠️ macOS 提示「已损坏，无法打开」？**
+>
+> 由于 App 未经 Apple 公证，macOS 会阻止首次运行。**两种方法任选其一：**
+>
+> **方法一（推荐）：** 打开 DMG 后，双击里面的 **「🔧 首次打开必读 - 修复已损坏.command」** 脚本，自动修复并启动。
+>
+> **方法二（手动）：** 将 App 拖入「应用程序」后，在终端运行：
+> ```bash
+> xattr -cr "/Applications/JD Price Monitor.app"
+> ```
+> 然后正常双击打开即可。
 
 ### 开发模式运行
 
