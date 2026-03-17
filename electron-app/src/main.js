@@ -163,8 +163,8 @@ async function startBbDaemon() {
     env: daemonEnv,
   })
 
-  bbDaemonProcess.stdout.on('data', (d) => log(`[bb-daemon] ${d.toString().trim()}`))
-  bbDaemonProcess.stderr.on('data', (d) => log(`[bb-daemon] ${d.toString().trim()}`))
+  bbDaemonProcess.stdout.on('data', (d) => log(`[bb-daemon] ${d.toString('utf8').trim()}`))
+  bbDaemonProcess.stderr.on('data', (d) => log(`[bb-daemon] ${d.toString('utf8').trim()}`))
   bbDaemonProcess.on('exit', (code) => {
     log(`[bb-daemon] exited with code ${code}`)
     daemonReady = false
@@ -281,14 +281,18 @@ function runPython(args) {
     runningProcess = spawn(pythonBin, args, {
       cwd: scriptsDir,
       stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env },
+      env: {
+        ...process.env,
+        PYTHONIOENCODING: 'utf-8',
+        PYTHONUTF8: '1',
+      },
     })
 
     runningProcess.stdout.on('data', (d) => {
-      d.toString().split('\n').filter(l => l.trim()).forEach(l => log(l))
+      d.toString('utf8').split('\n').filter(l => l.trim()).forEach(l => log(l))
     })
     runningProcess.stderr.on('data', (d) => {
-      d.toString().split('\n').filter(l => l.trim()).forEach(l => log(`[err] ${l}`))
+      d.toString('utf8').split('\n').filter(l => l.trim()).forEach(l => log(`[err] ${l}`))
     })
     runningProcess.on('exit', (code) => {
       runningProcess = null
