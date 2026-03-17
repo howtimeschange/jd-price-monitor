@@ -2,7 +2,7 @@
 
 > 监控京东自营店铺所有 SKU 的前台价格，自动发现破价商品，通过钉钉推送告警。
 
-> **🖥️ macOS + Windows 桌面客户端已上线** — 图形界面管理所有功能，告别命令行。[跳转查看 →](#️-macos--windows-桌面客户端)
+> **🖥️ macOS + Windows 桌面客户端已上线** — 图形界面管理所有功能，内置 AI 助手，告别命令行。[跳转查看 →](#️-macos--windows-桌面客户端)
 
 ## 一键安装
 
@@ -204,7 +204,7 @@ jd-price-monitor/
 ├── loop_worker.py                # 后台循环巡检 worker
 ├── scrape_list.py                # 价格导出核心逻辑（可独立运行）
 ├── config.yaml                   # 主配置文件
-├── requirements.txt              # Python 依赖
+├── requirements.txt              # Python 依赖（含 fastapi/uvicorn/httpx）
 ├── crontab.example               # 定时任务示例
 ├── adapters/
 │   └── jd/
@@ -216,13 +216,15 @@ jd-price-monitor/
 │   ├── dingtalk.py               # 钉钉告警
 │   ├── excel_writer.py           # Excel 导出（含兜底标记高亮）
 │   ├── sku_fetcher.py            # SKU + 价格抓取（含兜底补全）
-│   └── storage.py                # 历史记录存储
-└── electron-app/                 # 🖥️ macOS 桌面客户端
+│   ├── storage.py                # 历史记录存储
+│   └── ai_agent.py               # 🤖 AI 助手 Agent（MiniMax M2.1 + 工具调用）
+└── electron-app/                 # 🖥️ 桌面客户端
     ├── src/
-    │   ├── main.js               # Electron 主进程（IPC / Chrome / daemon）
+    │   ├── main.js               # Electron 主进程（IPC / Chrome / backend 启动）
     │   ├── preload.js            # 安全 IPC 桥接
     │   └── renderer/             # 浮窗 UI（HTML + CSS + JS）
-    ├── backend/server.py         # FastAPI 后端（备用）
+    ├── backend/
+    │   └── server.py             # FastAPI 后端（AI 助手 / WebSocket 日志 / 配置 API）
     ├── assets/icon.icns          # App 图标
     ├── electron-builder.yml      # 打包配置
     └── scripts/                  # Python 内嵌下载 / 构建脚本
@@ -286,7 +288,14 @@ npm run build:win       # Windows NSIS installer
 
 **钉钉通知** — Webhook / Secret 图形化配置，一键开关。
 
-**Chrome 连接** — 实时显示 Chrome CDP 和 bb-browser daemon 状态，一键启动 Chrome（自动注入 `--remote-debugging-port=9222`）。
+**Chrome 连接** — 实时显示 Chrome CDP 和 bb-browser daemon 状态，一键启动 Chrome（自动注入 `--remote-debugging-port=9222`）。支持自定义浏览器路径：若自动检测失败，可手动填写或通过文件选择框定位 `chrome.exe`，路径持久化保存。
+
+**AI 助手** — 内置基于 MiniMax M2.1 的智能助手，支持：
+- 🔍 读取最近运行日志，自动排查抓取失败原因
+- 📊 分析最新巡检结果，汇总破价 SKU
+- ⚙️ 读取并修改 `config.yaml` 配置（钉钉 Webhook、巡检间隔、价格阈值等）
+- 💬 响应式气泡布局，流式输出，支持文字选中复制
+- 快捷提示词一键发送常用问题
 
 **定时任务** — 基于系统 crontab 的可视化管理：
 - 查看所有已有定时任务，支持单条删除
@@ -297,9 +306,10 @@ npm run build:win       # Windows NSIS installer
 
 ### 技术架构
 
-- Electron 主进程内嵌 bb-browser，启动时自动托管 daemon
+- Electron 主进程启动时自动拉起 FastAPI 后端（`backend/server.py`，端口 7788），提供 AI 助手、WebSocket 日志推送、配置读写等 API
 - Python 子进程调用现有爬取逻辑，所有新功能（兜底补价、Excel 颜色高亮、价格来源列）一并生效
 - 配置读写直接操作项目根目录的 `config.yaml`，与 CLI 版完全共用
+- Windows 下 Chrome 路径自动检测（`Program Files`、`%LOCALAPPDATA%`、Edge 备选），找不到时弹出文件选择框
 
 ---
 
@@ -366,3 +376,20 @@ ASICS亚瑟士男款跑步鞋GEL-KAYANO...
 ## License
 
 MIT
+
+---
+
+## Changelog
+
+### v1.1.0 (2026-03-17)
+
+- 🤖 **AI 助手**：内置 MiniMax M2.1 智能助手，支持日志排查、巡检结果分析、配置修改，流式输出 + 工具调用
+- 🖥️ **AI 面板 UI 重构**：响应式气泡布局，Key 输入框移至标题栏，欢迎占位卡片，流式光标动画
+- 🪟 **Windows Chrome 兼容**：自动检测 `Program Files`、`%LOCALAPPDATA%`、Edge 等路径；找不到时弹出文件选择框；自定义路径持久化到 `config.yaml`
+- 📋 **文字可复制**：运行日志、AI 回复、表单内容均支持鼠标选中复制
+- 🔧 **Backend 自动启动**：Electron 启动时自动拉起 FastAPI 后端（端口 7788），开发模式优先使用项目 venv
+
+### v1.0.0
+
+- 初始发布：Electron 桌面客户端（macOS + Windows）
+- 巡检运行 / 店铺设置 / 破价配置 / 钉钉通知 / Chrome 连接 / 定时任务 / 数据文件管理
