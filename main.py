@@ -19,6 +19,7 @@ from src.sku_fetcher import fetch_sku_list
 from src.checker import check_violations
 from src.dingtalk import send_alert
 from src.storage import save_results, cleanup_old_files
+from src.excel_writer import write_price_excel
 
 
 def setup_logging():
@@ -83,6 +84,19 @@ def run_once():
     # 保存记录 & 清理
     save_results(sku_list, violated)
     cleanup_old_files()
+
+    # 导出 Excel（根据配置决定是否导出）
+    from pathlib import Path
+    if cfg.get("output", {}).get("loop_export_excel", True):
+        try:
+            if cfg["output"].get("excel_to_desktop", True):
+                out_dir = Path.home() / "Desktop"
+            else:
+                out_dir = Path(os.path.dirname(__file__)) / cfg["output"].get("data_dir", "data")
+            out_file = write_price_excel(sku_list, out_dir)
+            logger.info(f"📄 Excel 已导出：{out_file}")
+        except Exception as e:
+            logger.error(f"Excel 导出失败：{e}")
 
     logger.info(f"巡检完成，共耗时 {elapsed:.1f} 秒")
     logger.info("=" * 60)
