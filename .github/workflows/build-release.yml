@@ -103,7 +103,9 @@ jobs:
                   fix_dst = os.path.join(staging, script_dst_name)
                   shutil.copy2(script_src, fix_dst)
                   os.chmod(fix_dst, 0o755)
-                  print(f"  Added fix script: {script_dst_name}")
+                  # 清除 quarantine 扩展属性，否则用户双击该脚本时 Gatekeeper 也会拦截
+                  subprocess.run(["xattr", "-cr", fix_dst], capture_output=True)
+                  print(f"  Added fix script (quarantine cleared): {script_dst_name}")
 
                   # Repack — hdiutil auto-appends .dmg, so use a name without it
                   new_dmg_base = dmg + ".new"
